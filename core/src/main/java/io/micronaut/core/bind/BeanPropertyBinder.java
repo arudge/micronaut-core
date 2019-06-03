@@ -18,6 +18,7 @@ package io.micronaut.core.bind;
 import io.micronaut.core.beans.BeanMap;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
+import io.micronaut.core.order.Ordered;
 
 import java.util.Map;
 import java.util.Set;
@@ -31,7 +32,7 @@ import java.util.Set;
  * @author Graeme Rocher
  * @since 1.0
  */
-public interface BeanPropertyBinder extends ArgumentBinder<Object, Map<CharSequence, ? super Object>> {
+public interface BeanPropertyBinder extends ArgumentBinder<Object, Map<CharSequence, ? super Object>>, Ordered {
 
     /**
      * Bind a new instance of the given type from the given source.
@@ -118,5 +119,16 @@ public interface BeanPropertyBinder extends ArgumentBinder<Object, Map<CharSeque
      */
     default <T2> T2 bind(T2 object, Object source) throws ConversionErrorException {
         return bind(object, BeanMap.of(source).entrySet());
+    }
+
+    /**
+     * If the given object is supported. The default is true meaning supports all instance.
+     *
+     * @param object The bean
+     * @param <T2> The generic type
+     * @return {@link boolean} indicating whether the given object is supported
+     */
+    default <T2> boolean supports(T2 object) {
+       return true;
     }
 }

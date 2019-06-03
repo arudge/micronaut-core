@@ -24,9 +24,7 @@ import io.micronaut.core.reflect.InstantiationUtils;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -38,7 +36,7 @@ import java.util.function.Function;
 @Singleton
 public class MapToObjectConverter implements TypeConverter<Map, Object> {
 
-    private final Provider<BeanPropertyBinder> beanPropertyBinder;
+    private final Provider<List<BeanPropertyBinder>> beanPropertyBinders;
 
     /**
      * @param beanPropertyBinder To bind map and Java bean properties
@@ -46,15 +44,15 @@ public class MapToObjectConverter implements TypeConverter<Map, Object> {
      */
     @Deprecated
     public MapToObjectConverter(BeanPropertyBinder beanPropertyBinder) {
-        this(() -> beanPropertyBinder);
+        this(() -> Collections.singletonList(beanPropertyBinder));
     }
 
     /**
-     * @param beanPropertyBinder To bind map and Java bean properties
+     * @param beanPropertyBinders To bind map and Java bean properties
      */
     @Inject
-    public MapToObjectConverter(Provider<BeanPropertyBinder> beanPropertyBinder) {
-        this.beanPropertyBinder = beanPropertyBinder;
+    public MapToObjectConverter(Provider<List<BeanPropertyBinder>> beanPropertyBinders) {
+        this.beanPropertyBinders = beanPropertyBinders;
     }
 
     @Override
@@ -66,7 +64,11 @@ public class MapToObjectConverter implements TypeConverter<Map, Object> {
                 Object key = entry.getKey();
                 bindMap.put(NameUtils.decapitalize(NameUtils.dehyphenate(key.toString())), entry.getValue());
             }
-            return beanPropertyBinder.get().bind(object, bindMap);
+            return beanPropertyBinders.get()
+                    .stream()
+                    .filter(beanPropertyBinder -> beanPropertyBinder.supports(object))
+                    .findFirst()
+                    .map(beanPropertyBinder -> beanPropertyBinder.bind(object, bindMap));
         };
 
         Optional<Object> instance = InstantiationUtils.tryInstantiate(targetType, map, context)
