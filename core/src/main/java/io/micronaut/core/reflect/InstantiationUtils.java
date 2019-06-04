@@ -94,7 +94,7 @@ public class InstantiationUtils {
             try {
                 if (constructorArguments.length > 0) {
 
-                    Map bindMap = new LinkedHashMap(propertiesMap.size());
+                    Map<String, Object> bindMap = new LinkedHashMap<>(propertiesMap.size());
                     Set<Map.Entry<?, ?>> entries = propertiesMap.entrySet();
                     for (Map.Entry<?, ?> entry : entries) {
                         Object key = entry.getKey();

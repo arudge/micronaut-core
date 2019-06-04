@@ -4,6 +4,7 @@ import io.micronaut.core.bind.BeanPropertyBinder;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 
+import javax.inject.Singleton;
 import java.util.Map;
 import java.util.Set;
 
@@ -13,6 +14,7 @@ import java.util.Set;
  * @author Puneet Behl
  * @since 1.2.0
  */
+@Singleton
 public class IntrospectedBeanPropertyBinder implements BeanPropertyBinder {
     @Override
     public <T2> T2 bind(Class<T2> type, Set<? extends Map.Entry<? extends CharSequence, Object>> source) throws ConversionErrorException {

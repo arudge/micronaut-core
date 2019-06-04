@@ -26,6 +26,7 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.StreamSupport;
 
 /**
  * A class that uses the {@link BeanPropertyBinder} to bind maps to {@link Object} instances.
@@ -36,22 +37,22 @@ import java.util.function.Function;
 @Singleton
 public class MapToObjectConverter implements TypeConverter<Map, Object> {
 
-    private final Provider<List<BeanPropertyBinder>> beanPropertyBinders;
+    private final Collection<BeanPropertyBinder> beanPropertyBinders;
 
     /**
      * @param beanPropertyBinder To bind map and Java bean properties
-     * @deprecated Use {@link #MapToObjectConverter(Provider)} instead
+     * @deprecated Use {@link #MapToObjectConverter(Collection)} instead
      */
     @Deprecated
     public MapToObjectConverter(BeanPropertyBinder beanPropertyBinder) {
-        this(() -> Collections.singletonList(beanPropertyBinder));
+        this(Collections.singleton(beanPropertyBinder));
     }
 
     /**
      * @param beanPropertyBinders To bind map and Java bean properties
      */
     @Inject
-    public MapToObjectConverter(Provider<List<BeanPropertyBinder>> beanPropertyBinders) {
+    public MapToObjectConverter(Collection<BeanPropertyBinder> beanPropertyBinders) {
         this.beanPropertyBinders = beanPropertyBinders;
     }
 
@@ -59,16 +60,16 @@ public class MapToObjectConverter implements TypeConverter<Map, Object> {
     public Optional<Object> convert(Map map, Class<Object> targetType, ConversionContext context) {
         final Function<Map, Function<Object, Object>> propertiesBinderFunction = properties -> object -> {
             Map<?, ?> theMap = properties;
-            Map bindMap = new LinkedHashMap(theMap.size());
+            Map<String, Object> bindMap = new LinkedHashMap<>(theMap.size());
             for (Map.Entry<?, ?> entry : theMap.entrySet()) {
                 Object key = entry.getKey();
                 bindMap.put(NameUtils.decapitalize(NameUtils.dehyphenate(key.toString())), entry.getValue());
             }
-            return beanPropertyBinders.get()
-                    .stream()
+            return beanPropertyBinders.stream()
                     .filter(beanPropertyBinder -> beanPropertyBinder.supports(object))
                     .findFirst()
-                    .map(beanPropertyBinder -> beanPropertyBinder.bind(object, bindMap));
+                    .map(beanPropertyBinder -> beanPropertyBinder.bind(object, bindMap))
+                    .get();
         };
 
         Optional<Object> instance = InstantiationUtils.tryInstantiate(targetType, map, context)
